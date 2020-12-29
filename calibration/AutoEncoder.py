@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import sys
-import time
 
 from keras import Sequential
 from keras.layers import Dense, LSTM, RepeatVector, TimeDistributed, Lambda, Input
@@ -12,8 +10,6 @@ from keras.callbacks import EarlyStopping
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-
-from keras.utils import plot_model
 
 import pickle
 
