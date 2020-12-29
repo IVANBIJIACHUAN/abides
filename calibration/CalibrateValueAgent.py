@@ -14,6 +14,8 @@ import seaborn as sns
 from scipy.stats import linregress
 import time
 import multiprocessing as mp
+from gurobipy import *
+from scipy.stats import kstwobign
 
 
 class CalibrateValueAgent:
@@ -38,10 +40,7 @@ class CalibrateValueAgent:
         # Calibrate OU process
         self.r_bar, self.kappa, self.sigma_s = CalibrateValueAgent.calibrateOU(self.fundamental_series, freq)
 
-        # Set random seed
-        if not seed:
-            seed = int(pd.Timestamp.now().timestamp() * 1000000) % (2 ** 32 - 1)
-        np.random.seed(seed)
+        self.seed = seed
 
         # What is the earliest available time for an agent to act during the
         # simulation?
@@ -57,28 +56,73 @@ class CalibrateValueAgent:
         self.defaultComputationDelay = 1000000000  # one second
 
         print("Calibrate freq: {}".format(self.freq))
-        print("Configuration seed: {}\n".format(seed))
+        logprint("Calibrate freq: {}\n".format(self.freq))
+        print("Configuration seed: {}".format(seed))
+        logprint("Configuration seed: {}\n".format(seed))
+        logprint("Computer cores: {}\n".format(mp.cpu_count()))
         print("Calibrated OU parameters: r_bar = {}, kappa = {}, sigma_s = {}".format(self.r_bar, self.kappa,
                                                                                       self.sigma_s))
+        logprint("Calibrated OU parameters: r_bar = {}, kappa = {}, sigma_s = {}\n".format(self.r_bar, self.kappa,
+                                                                                           self.sigma_s))
 
-    # def calibrateModelGD(self, initial_sigma_n=1, batch_size=16, diff_step=100, learning_rate=1e5, maxiter=10, tol=10,
-    #                      parallel=True):
-    #     sigma_n = initial_sigma_n
-    #     for i in range(maxiter):
-    #         loss_now = self.evaluateLoss(sigma_n, batch_size, parallel)
-    #         loss_forward = self.evaluateLoss(sigma_n + diff_step, batch_size, parallel)
-    #         sigma_n_prev = sigma_n
-    #         sigma_n -= (loss_forward - loss_now) / diff_step * learning_rate
-    #         if abs(sigma_n - sigma_n_prev) < tol:
-    #             break
-    #     return {self.symbol: {'r_bar': self.r_bar, 'kappa': self.kappa, 'fund_var_sigma_s': self.sigma_s,
-    #                           'noise_var_sigma_n': sigma_n}}
+    def calibrateModelDRO(self, sigma_n_grid, batch_size=16, parallel=True):
+        n1 = len(self.fundamental_returns)
+        fundamental_returns_sorted = np.sort(self.fundamental_returns)
+        fund_quantile = np.searchsorted(fundamental_returns_sorted, self.fundamental_returns, side='right') / n1
+        quantile_dict = dict()
+        for sigma_n in sigma_n_grid:
+            time_start = time.time()
+            dist_sim = self.generateReturnDistribution(sigma_n, batch_size, parallel)
+            dist_sim = np.sort(dist_sim)
+            n2 = len(dist_sim)
+            quantile_dict[sigma_n] = np.searchsorted(dist_sim, self.fundamental_returns, side='right') / n2
+            time_end = time.time()
+            print("sigma_n {} finished with total time {}, loss {}.".format(sigma_n, time_end - time_start, np.max(
+                quantile_dict[sigma_n] - fund_quantile)))
+            logprint("sigma_n {} finished with total time {}, loss {}.\n".format(sigma_n, time_end - time_start, np.max(
+                quantile_dict[sigma_n] - fund_quantile)))
+
+        print("Quantile calculation finished. Start optimization")
+        m = Model("DRO")
+
+        q = m.addVar(vtype=GRB.CONTINUOUS, name='q')
+        W = dict()
+        W_sum = 0
+        quantile_avg = dict()
+        m.addConstr(q >= 0, name="postive_q")
+        for i in range(len(sigma_n_grid)):
+            W[i] = m.addVar(vtype=GRB.CONTINUOUS, name='W' + str(i))
+            m.addConstr(W[i] >= 0, "postive_W" + str(i))
+            W_sum += W[i]
+            for j in range(len(fund_quantile)):
+                if j in quantile_avg:
+                    quantile_avg[j] += W[i] * quantile_dict[sigma_n_grid[i]][j]
+                else:
+                    quantile_avg[j] = W[i] * quantile_dict[sigma_n_grid[i]][j]
+
+        m.addConstr(W_sum == 1, name="sum_prob")
+        for j in range(len(fund_quantile)):
+            m.addConstr(fund_quantile[j] - q / np.sqrt(n1 * n2 / (n1 + n2)) <= quantile_avg[j], name="qCons1_" + str(j))
+            m.addConstr(fund_quantile[j] + q / np.sqrt(n1 * n2 / (n1 + n2)) >= quantile_avg[j], name="qCons2_" + str(j))
+
+        m.setObjective(q, GRB.MINIMIZE)
+        m.optimize()
+        print("Optimization finished.")
+
+        W_optimal = [W[i].x for i in W]
+        plt.plot(sigma_n_grid, W_optimal)
+        plt.xlabel("$\sigma_n^2$")
+        plt.ylabel("Weights")
+        plt.savefig(log_file + "_weights.png")
+        plt.show()
+
+        return m.objVal, kstwobign.sf(m.objVal), W_optimal
 
     def calibrateModelGS(self, sigma_n_grid, batch_size=16, parallel=True):
         loss_dict = dict()
         for sigma_n in sigma_n_grid:
             time_start = time.time()
-            loss_dict[sigma_n] = model.evaluateLoss(sigma_n, batch_size, parallel)
+            loss_dict[sigma_n] = self.evaluateLoss(sigma_n, batch_size, parallel)
             time_end = time.time()
             print("sigma_n {} finished with total time {}, loss {}.".format(sigma_n, time_end - time_start,
                                                                             loss_dict[sigma_n]))
@@ -86,7 +130,7 @@ class CalibrateValueAgent:
         return {self.symbol: {'r_bar': self.r_bar, 'kappa': self.kappa, 'fund_var_sigma_s': self.sigma_s,
                               'noise_var_sigma_n': sigma_n}}
 
-    def evaluateLoss(self, sigma_n, batch_size=16, parallel=True):
+    def generateReturnDistribution(self, sigma_n, batch_size=16, parallel=True):
         if not parallel:
             dist_sim = np.array([])
             for i in range(batch_size):
@@ -105,13 +149,29 @@ class CalibrateValueAgent:
                     mid_prices = p.get()
                     mid_prices["return"] = np.log(1 + mid_prices["price"].pct_change())
                     mid_prices.dropna(inplace=True)
+                    # print(mid_prices.head(30))
                     dist_sim = np.hstack([mid_prices["return"].values, dist_sim])
                 pool.close()
                 pool.join()
+
+        z1 = len(self.fundamental_returns[self.fundamental_returns != 0.]) / len(self.fundamental_returns)
+        z2 = len(dist_sim[dist_sim != 0.]) / len(dist_sim)
         print(self.fundamental_returns.shape, dist_sim.shape)
+        logprint("{},{}\n".format(self.fundamental_returns.shape, dist_sim.shape))
+        print(z1, z2)
+        logprint("{},{}\n".format(z1, z2))
+
+        return dist_sim
+
+    def evaluateLoss(self, sigma_n, batch_size=16, parallel=True):
+        dist_sim = self.generateReturnDistribution(sigma_n, batch_size, parallel)
         return CalibrateValueAgent.KSDistance(self.fundamental_returns, dist_sim)
 
-    def generateMidPrices(self, sigma_n):
+    def generateMidPrices(self, sigma_n):  # Set random seed
+        if not self.seed:
+            self.seed = int(pd.Timestamp.now().timestamp() * 1000000) % (2 ** 32 - 1)
+        np.random.seed(self.seed)
+
         # Note: sigma_s is no longer used by the agents or the fundamental (for sparse discrete simulation).
         symbols = {
             self.symbol: {'r_bar': self.r_bar, 'kappa': self.kappa, 'agent_kappa': 1e-15, 'sigma_s': 0.,
@@ -121,7 +181,7 @@ class CalibrateValueAgent:
 
         util.silent_mode = True
         LimitOrder.silent_mode = True
-        OrderBook.tqdm_used  = False
+        OrderBook.tqdm_used = False
 
         kernel = CalculationKernel("Calculation Kernel", random_state=np.random.RandomState(
             seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')))
@@ -244,27 +304,7 @@ class CalibrateValueAgent:
 
     def plot_distribution(self, sigma_n, batch_size=16, parallel=True, rule_out_zero=False):
         fundamental_returns = self.fundamental_returns
-        if not parallel:
-            dist_sim = np.array([])
-            for i in range(batch_size):
-                mid_prices = self.generateMidPrices(sigma_n)
-                mid_prices["return"] = np.log(1 + mid_prices["price"].pct_change())
-                mid_prices.dropna(inplace=True)
-                dist_sim = np.hstack([mid_prices["return"].values, dist_sim])
-        else:
-            dist_sim = np.array([])
-            num_cores = int(mp.cpu_count())
-            iter = batch_size // num_cores
-            for i in range(iter):
-                pool = mp.Pool(num_cores)
-                results = [pool.apply_async(self.generateMidPrices, args=(sigma_n,)) for j in range(num_cores)]
-                for p in results:
-                    mid_prices = p.get()
-                    mid_prices["return"] = np.log(1 + mid_prices["price"].pct_change())
-                    mid_prices.dropna(inplace=True)
-                    dist_sim = np.hstack([mid_prices["return"].values, dist_sim])
-                pool.close()
-                pool.join()
+        dist_sim = self.generateReturnDistribution(sigma_n, batch_size, parallel)
 
         if rule_out_zero:
             fundamental_returns = fundamental_returns[fundamental_returns != 0.]
@@ -346,18 +386,42 @@ class CalibrateValueAgent:
         return param_list[best_idx], score_list[best_idx]
 
 
+log_file = "log"
+
+
+def logprint(message):
+    with open(log_file + ".txt", "a") as f:
+        f.write(message)
+
+
 if __name__ == "__main__":
+    logprint("----------------------------------------------------\n")
     model = CalibrateValueAgent(symbol="AAPL", historical_date="20190603", lambda_a=1e-12, num_agents=100)
 
-    model.plot_distribution(sigma_n=4225, batch_size=32)
-    model.plot_distribution(sigma_n=6000, batch_size=32)
+    # model.plot_distribution(sigma_n=4225, batch_size=32)
+    # model.plot_distribution(sigma_n=6000, batch_size=32)
 
-    sigma_n_grid = np.arange(5, 100, 5)
+    sigma_n_grid = np.arange(5, 201, 5)
     sigma_n_grid = sigma_n_grid ** 2
 
     time_start = time.time()
-    param_dict = model.calibrateModelGS(sigma_n_grid, batch_size=128)
+
+    # param_dict = model.calibrateModelGS(sigma_n_grid, batch_size=8)
+    # print(param_dict)
+
+    result_dict = model.calibrateModelDRO(sigma_n_grid, batch_size=8)
+    print(result_dict)
+    logprint("{}\n".format(result_dict))
+
     time_end = time.time()
     print('totally time', time_end - time_start)
-    print(param_dict)
-    # {'AAPL': {'r_bar': 17422.92347392952, 'kappa': 1.6968932483558243e-13, 'fund_var_sigma_s': 1.329102726489007e-08, 'noise_var_sigma_n': 4225}}
+    logprint("totally time {}\n".format(time_end - time_start))
+    logprint("----------------------------------------------------\n")
+
+    # b_128_grid {'AAPL': {'r_bar': 17422.92347392952, 'kappa': 1.6968932483558243e-13, 'fund_var_sigma_s': 1.329102726489007e-08, 'noise_var_sigma_n': 4225}}
+    # B_64_DRO l=1e-12 5-100 (2.13854335003672, 0.00021313428616781392, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5792141951837781, 0.4207858048162219, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    # B_64_DRO l=2e-12 50-150 (2.0458293235535803, 0.00046304419184845717, [0.0, 0.0, 0.0, 0.366818873668189, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.633181126331811, 0.0, 0.0, 0.0, 0.0])
+    # B_64_DRO l=3e-12 5-150 (1.9091424694165953, 0.0013651339042317647, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3895720345808983, 0.0, 0.0, 0.0, 0.1158245180690439, 0.0, 0.4946034473500578, 0.0, 0.0, 0.0])
+    # B_64_DRO l=4e-12 5-200 (1.8171170974372886, 0.0027103380409097344, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.34760528781425004, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2169846231369408, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4354100890488091, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    # B_64_DRO l=5e-12 5-200 (1.6709905878651525, 0.007511861594051844, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8553052037412611, 0.0, 0.0, 0.0, 0.09624938772657188, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.04844540853216711, 0.0, 0.0])
+    # B_64_DRO l=6e-12 5-200 (1.5587925392302957, 0.015506102138205387, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5421611689837513, 0.0, 0.0, 0.04799071058505739, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.40984812043119123, 0.0, 0.0, 0.0, 0.0])

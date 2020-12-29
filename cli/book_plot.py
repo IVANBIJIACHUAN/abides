@@ -187,7 +187,12 @@ if SHOW_BEST:
         if ba and bb: df_book.loc[idx, round((ba + bb) / 2)] = midpoint_value
 
         mid_time.append(idx)
-        mid_price.append(round((ba + bb) / 2))
+        if ba and bb:
+            mid_price.append(round((ba + bb) / 2))
+        elif ba:
+            mid_price.append(ba)
+        else:
+            mid_price.append(bb)
 
     # Put the data frame indices back the way they were and ensure it is a DataFrame,
     # not a Series.
@@ -260,6 +265,7 @@ ax.set(xlabel='Quote Time', ylabel='Quoted Price')
 plt.show()
 
 mid_line = pd.DataFrame({"price": mid_price}, index=mid_time)
+mid_line.fillna(method="ffill",inplace=True)
 print(mid_line)
 
 # plt.figure(figsize=(12,9))
@@ -273,9 +279,9 @@ from scipy.stats import kurtosis
 mid_line["return"] = np.log(1 + mid_line["price"].pct_change())
 mid_line.dropna(inplace=True)
 print(mid_line["return"].mean(),mid_line["return"].std(),kurtosis(mid_line["return"]))
-print(sum(mid_line["return"].values!=0.))
+print(sum(mid_line["return"].values!=0.)/len(mid_line["return"].values))
 
 ax0=sns.distplot(mid_line["return"])
-ax0.set_xlim(-0.01, +0.01)
+# ax0.set_xlim(-0.01, +0.01)
 
 plt.show()

@@ -291,7 +291,12 @@ class CalculationKernel(Kernel):
             bb = best_bid.loc[idx, 'best']
             ba = best_ask.loc[idx, 'best']
             mid_time.append(idx)
-            mid_price.append(round((ba + bb) / 2))
+            if ba and bb:
+                mid_price.append(round((ba + bb) / 2))
+            elif ba:
+                mid_price.append(ba)
+            else:
+                mid_price.append(bb)
         df_midprices=pd.DataFrame({"price": mid_price}, index=mid_time)
         df_midprices.fillna(method="ffill", inplace=True)
         df_midprices.fillna(method="bfill", inplace=True)

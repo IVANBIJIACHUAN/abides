@@ -2,6 +2,7 @@ from CalculationKernel import CalculationKernel, HiddenPrints
 from agent.ExchangeAgent import ExchangeAgent
 from agent.NoiseAgent import NoiseAgent
 from agent.ValueAgent import ValueAgent
+from agent.GuessAgent import  GuessAgent
 from util.order import LimitOrder
 from util.oracle.SparseMeanRevertingOracle import SparseMeanRevertingOracle
 from util import util
@@ -130,7 +131,7 @@ defaultComputationDelay = 1000000000  # one second
 
 # Note: sigma_s is no longer used by the agents or the fundamental (for sparse discrete simulation).
 
-symbols = {'JPM': {'r_bar': 19789, 'kappa': 2.74e-13, 'agent_kappa': 1e-15, 'sigma_s': 1e-9, 'fund_vol': 1e-9,
+symbols = {'JPM': {'r_bar': 19789, 'kappa': 2.74e-13, 'agent_kappa': 1e-15, 'sigma_s': 0., 'fund_vol': 1e-9,
                    'megashock_lambda_a': 1e-15, 'megashock_mean': 0., 'megashock_var': 1e-15,
                    'random_state': np.random.RandomState(seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64'))}}
 
@@ -204,15 +205,25 @@ num_value = num - num_noise
 # ZI strategy split.  Note that agent arrival rates are quite small, because our minimum
 # time step is a nanosecond, and we want the agents to arrive more on the order of
 # minutes.
-agents.extend([ValueAgent(j, "Value Agent {}".format(j),
-                          "ValueAgent {}".format(j),
+# agents.extend([ValueAgent(j, "Value Agent {}".format(j),
+#                           "ValueAgent {}".format(j),
+#                           random_state=np.random.RandomState(
+#                               seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
+#                           log_orders=log_orders, symbol=symbol,  # starting_cash=starting_cash,
+#                           sigma_n=sigma_n, r_bar=s['r_bar'], kappa=s['agent_kappa'],
+#                           sigma_s=s['fund_vol'],
+#                           lambda_a=1e-12) for j in range(agent_count, agent_count + num_value)])
+# agent_types.extend(["ValueAgent {}".format(j) for j in range(num_value)])
+# agent_count += num_value
+
+agents.extend([GuessAgent(j, "Guess Agent {}".format(j),
+                          "GuessAgent {}".format(j),
                           random_state=np.random.RandomState(
                               seed=np.random.randint(low=0, high=2 ** 32, dtype='uint64')),
                           log_orders=log_orders, symbol=symbol,  # starting_cash=starting_cash,
-                          sigma_n=sigma_n, r_bar=s['r_bar'], kappa=s['agent_kappa'],
-                          sigma_s=s['fund_vol'],
+                          guess_target={.1:1.},
                           lambda_a=1e-12) for j in range(agent_count, agent_count + num_value)])
-agent_types.extend(["ValueAgent {}".format(j) for j in range(num_value)])
+agent_types.extend(["GuessAgent {}".format(j) for j in range(num_value)])
 agent_count += num_value
 
 ### Configure a simple message latency matrix for the agents.  Each entry is the minimum
@@ -265,7 +276,8 @@ midprices_JPM.plot()
 plt.show()
 
 midprices_JPM["return"]=np.log(1+midprices_JPM["price"].pct_change())
-print(sum(midprices_JPM["return"].values==0.)/len(midprices_JPM["return"]))
+print(sum(midprices_JPM["return"].values!=0.)/len(midprices_JPM["return"]))
+print(midprices_JPM["return"].mean())
 
 sns.distplot(midprices_JPM["return"].values)
 plt.show()

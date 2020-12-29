@@ -519,7 +519,7 @@ class OrderBook:
         # Construct sparse matrix, where rows are timesteps, columns are quotes and elements are volume.
         S = dok_matrix((log_len, len(quotes)), dtype=int)  # Dictionary Of Keys based sparse matrix.
 
-        if tqdm == True:
+        if tqdm_used == True:
             for i, row in enumerate(tqdm(self.book_log, desc="Processing orderbook log")):
                 quotes_times.append(row['QuoteTime'])
                 for quote, vol in row.items():

@@ -493,7 +493,9 @@ class Kernel:
     if filename:
       file = "{}.bz2".format(filename)
     else:
-      file = "{}.bz2".format(self.agents[sender].name.replace(" ",""))
+      file = "{}.bz2".format(
+        self.agents[sender].name.replace(" ", "").replace("[", "").replace("]", "").replace(",", "").replace(
+          "<", "").replace("=", ""))
 
     if not os.path.exists(path):
       os.makedirs(path)

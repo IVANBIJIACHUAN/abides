@@ -1,0 +1,111 @@
+----------------------------------------------------
+Configuration seed: 3660134129
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+sigma_n 25 finished with time 20.264842748641968, loss is 0.4457831325301204 at (111, 6).
+sigma_n 100 finished with time 22.304704189300537, loss is 0.4648594377510039 at (178, 5).
+sigma_n 225 finished with time 21.889683961868286, loss is 0.37700803212851397 at (125, 4).
+sigma_n 400 finished with time 22.02308416366577, loss is 0.5406626506024096 at (228, 5).
+sigma_n 625 finished with time 22.861175060272217, loss is 0.5205823293172691 at (26, 5).
+sigma_n 900 finished with time 21.734946489334106, loss is 0.4337349397590361 at (108, 6).
+sigma_n 1225 finished with time 22.736176252365112, loss is 0.5130522088353414 at (59, 0).
+sigma_n 1600 finished with time 22.995487213134766, loss is 0.389558232931727 at (152, 4).
+sigma_n 2025 finished with time 26.745015859603882, loss is 0.39257028112449804 at (89, 0).
+sigma_n 2500 finished with time 24.517200708389282, loss is 0.4171686746987952 at (114, 0).
+sigma_n 3025 finished with time 22.67599320411682, loss is 0.4538152610441767 at (113, 6).
+sigma_n 3600 finished with time 22.80296778678894, loss is 0.40963855421686746 at (102, 4).
+sigma_n 4225 finished with time 23.433847427368164, loss is 0.44528112449799195 at (142, 7).
+sigma_n 4900 finished with time 22.46917462348938, loss is 0.47791164658634533 at (119, 4).
+sigma_n 5625 finished with time 22.561016082763672, loss is 0.4698795180722891 at (117, 6).
+sigma_n 6400 finished with time 23.476083278656006, loss is 0.46084337349397586 at (177, 6).
+sigma_n 7225 finished with time 22.65685200691223, loss is 0.4056224899598394 at (148, 4).
+sigma_n 8100 finished with time 22.61906933784485, loss is 0.35742971887550196 at (89, 5).
+sigma_n 9025 finished with time 24.26907753944397, loss is 0.44779116465863444 at (236, 5).
+sigma_n 10000 finished with time 24.069892406463623, loss is 0.36144578313253006 at (90, 4).
+Quantile calculation finished. Start optimization.
+Optimization finished.
+(0.46670627339061466, 0.9813702651032993, [0.0, 0.0, 0.09954843728604897, 0.08840908783127985, 0.06927372284191093, 0.0, 0.0, 0.09882467298944753, 0.18427023944410076, 0.12108155364056376, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0890493408628902, 0.1274442092085092, 0.025713193726574206, 0.09638554216867454])
+totally time 569.1280033588409
+----------------------------------------------------
+----------------------------------------------------
+Configuration seed: 2921849453
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+----------------------------------------------------
+Configuration seed: 4243965293
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+sigma_n 25 finished with time 22.070960998535156, loss is 0.38102409638554213 at (126, 6).
+sigma_n 100 finished with time 21.178309440612793, loss is 0.41967871485943775 at (20, 5).
+----------------------------------------------------
+Configuration seed: 23260150
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+sigma_n 25 finished with time 22.299049377441406, loss is 0.5286144578313253 at (24, 5).
+sigma_n 100 finished with time 23.595214128494263, loss is 0.49347389558232924 at (154, 7).
+sigma_n 225 finished with time 22.26864457130432, loss is 0.48092369477911645 at (182, 1).
+----------------------------------------------------
+Configuration seed: 106462179
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+sigma_n 25 finished with time 20.644777297973633, loss is 0.41767068273092367 at (104, 5).
+sigma_n 100 finished with time 21.93033528327942, loss is 0.37349397590361444 at (93, 4).
+sigma_n 225 finished with time 21.90839433670044, loss is 0.4056224899598394 at (148, 1).
+sigma_n 400 finished with time 22.516597509384155, loss is 0.5055220883534136 at (157, 7).
+----------------------------------------------------
+Configuration seed: 3291657161
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+----------------------------------------------------
+Configuration seed: 3304966302
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+sigma_n 25 finished with time 22.70729088783264, loss is 0.4437751004016064 at (235, 5).
+sigma_n 100 finished with time 22.474834442138672, loss is 0.4618473895582329 at (115, 1).
+----------------------------------------------------
+Configuration seed: 4145118218
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+----------------------------------------------------
+Configuration seed: 4207766846
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+----------------------------------------------------
+Configuration seed: 482074111
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+----------------------------------------------------
+Configuration seed: 666332294
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+----------------------------------------------------
+Configuration seed: 960797767
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+----------------------------------------------------
+Configuration seed: 1084844690
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+sigma_n 25 finished with time 20.405781745910645, loss is 0.4056224899598393 at (101, 4).
+sigma_n 100 finished with time 21.63512396812439, loss is 0.4417670682730923 at (110, 3).
+----------------------------------------------------
+Configuration seed: 1175271401
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+----------------------------------------------------
+Configuration seed: 1611709397
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+----------------------------------------------------
+Configuration seed: 626740858
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+sigma_n 25 finished with time 11.221979856491089, loss is 0.4723895582329316 at (211, 1).
+sigma_n 100 finished with time 13.673448085784912, loss is 0.37349397590361455 at (156, 3).
+----------------------------------------------------
+Configuration seed: 2071454727
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+----------------------------------------------------
+Configuration seed: 3847496620
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+sigma_n 25 finished with time 11.301759958267212, loss is 0.41666666666666663 at (166, 2).
+sigma_n 100 finished with time 12.972301006317139, loss is 0.4774096385542168 at (150, 0).
+----------------------------------------------------
+Configuration seed: None
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+sigma_n 25 finished with time 11.688730716705322, loss is 0.37700803212851397 at (125, 4).
+sigma_n 100 finished with time 14.107261180877686, loss is 0.413152610441767 at (134, 0).
+sigma_n 225 finished with time 14.332660913467407, loss is 0.4693775100401606 at (148, 4).
+sigma_n 400 finished with time 14.432389974594116, loss is 0.4216867469879518 at (105, 7).
+----------------------------------------------------
+Configuration seed: None
+Calibrated OU parameters: r_bar = 20799.997737387028, kappa = 4.029052730085017e-13, sigma_s = 2.2471209491653043e-09
+sigma_n 25 finished with time 15.753856420516968, loss is 0.4728915662650601 at (180, 5).
+sigma_n 100 finished with time 14.314739465713501, loss is 0.570281124497992 at (142, 0).
+sigma_n 225 finished with time 14.557026386260986, loss is 0.5456827309236948 at (82, 3).
+sigma_n 400 finished with time 14.710647821426392, loss is 0.48845381526104414 at (215, 2).
+sigma_n 625 finished with time 14.447352409362793, loss is 0.3855421686746988 at (153, 7).
